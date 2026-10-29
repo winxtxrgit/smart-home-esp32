@@ -3,7 +3,9 @@ firmware/smart_home/arduino_secrets.h
 
 # Firebase
 web/.firebase/
-web/firebase-debug.log
+.firebase/
+firebase-debug.log
+**/firebase-debug.log
 .firebaserc.local
 
 # OS / editor
