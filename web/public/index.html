@@ -13,27 +13,8 @@
   <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-database.js"></script>
 
-  <script>
-    // Replace with your app config object (Firebase Console -> Project settings).
-    // Firebase web config is safe to expose publicly; access is protected by
-    // Authentication + Realtime Database security rules, not by hiding these values.
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT.firebaseapp.com",
-      databaseURL: "https://YOUR_PROJECT-default-rtdb.REGION.firebasedatabase.app",
-      projectId: "YOUR_PROJECT",
-      storageBucket: "YOUR_PROJECT.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
-    };
-
-    // Initialize firebase
-    firebase.initializeApp(firebaseConfig);
-
-    // Make auth and database references
-    const auth = firebase.auth();
-    const db = firebase.database();
-  </script>
+  <!-- Firebase config + initialization — edit values in scripts/firebase-config.js -->
+  <script src="scripts/firebase-config.js"></script>
 
   <!-- icons -->
   <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>

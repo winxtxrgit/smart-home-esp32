@@ -170,9 +170,9 @@ const setupUI = (user) => {
 
     dbRefOutput8.on('value', snap => {
       if (snap.val() == 1) {
-        stateElement8.innerText = "OFF";
-      } else {
         stateElement8.innerText = "ON";
+      } else {
+        stateElement8.innerText = "OFF";
       }
     });
 
@@ -251,9 +251,9 @@ const setupUI = (user) => {
 
     fan.onclick = () => {
       if (fan.checked) {
-        dbRefOutput8.set(0);
-      } else {
         dbRefOutput8.set(1);
+      } else {
+        dbRefOutput8.set(0);
       }
     }
 
@@ -393,12 +393,14 @@ const setupUI = (user) => {
             } else {
               var temperature = element.temperature;
               var humidity = element.humidity;
+              var light = element.light;
               var timestamp = element.timestamp;
               var content = '';
               content += '<tr>';
               content += '<td>' + epochToDateTime(timestamp) + '</td>';
               content += '<td>' + temperature + '</td>';
               content += '<td>' + humidity + '</td>';
+              content += '<td>' + light + '</td>';
               content += '</tr>';
               $('#tbody').append(content);
             }

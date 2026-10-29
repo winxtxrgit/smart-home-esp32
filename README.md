@@ -89,12 +89,14 @@ smart-home-esp32/
 │       ├── smart_home.ino            # โค้ด ESP32 (Arduino)
 │       └── arduino_secrets.h.example # เทมเพลตใส่ Wi-Fi/Firebase credential
 ├── web/
-│   ├── firebase.json                 # ตั้งค่า Firebase Hosting
+│   ├── firebase.json                 # ตั้งค่า Firebase Hosting + Database rules
+│   ├── database.rules.json           # กฎความปลอดภัยของ Realtime Database
 │   └── public/
 │       ├── index.html                # หน้าเว็บหลัก (ฟอร์มล็อกอิน + แดชบอร์ด)
 │       ├── 404.html
 │       ├── style.css
 │       └── scripts/
+│           ├── firebase-config.js    # ค่า config + init Firebase (แก้ค่าที่นี่)
 │           ├── auth.js               # ล็อกอิน/ล็อกเอาท์
 │           ├── gauges-definition.js  # นิยามเกจอุณหภูมิ/ความชื้น
 │           └── index.js              # ตรรกะแดชบอร์ดหลัก
@@ -116,7 +118,7 @@ smart-home-esp32/
 
 ### 2) เว็บไซต์ (Web dashboard)
 
-เปิดไฟล์ `web/public/index.html` แล้วแทนที่ `firebaseConfig` ด้วยค่าโปรเจกต์ของคุณ:
+เปิดไฟล์ `web/public/scripts/firebase-config.js` แล้วแทนที่ค่า placeholder ด้วยค่าโปรเจกต์ของคุณ:
 
 ```js
 const firebaseConfig = {
@@ -182,11 +184,17 @@ cd web && firebase deploy
   ทำให้เงื่อนไข `temp > 30` ของ Auto Fan ไม่ทำงาน ตอนนี้อัปเดต global `temp` / `hum` ทุกครั้งที่อ่านเซนเซอร์
   (พร้อมกรองค่า NaN)
 
-### ⏳ ยังเหลือ (ฝั่งเว็บ) / Still open (web)
+- **เว็บ — สวิตช์พัดลม (`fan.onclick`) ตรรกะกลับด้าน:** แก้ให้ติ๊ก = เปิด (`set(1)`)
+  และการแสดงสถานะ (`state8`) ตรงกับสวิตช์อื่นแล้ว
+- **เว็บ — ตาราง `appendToTable()` ขาดคอลัมน์ Light:** เพิ่มคอลัมน์ Light ให้ครบ 4 คอลัมน์ตรงกับหัวตาราง
+- **เว็บ — ย้าย `firebaseConfig` ออกเป็นไฟล์แยก + เพิ่ม Security Rules:** ย้าย config ไป
+  `web/public/scripts/firebase-config.js` และเพิ่มกฎความปลอดภัยที่ `web/database.rules.json`
+  (อนุญาตเฉพาะผู้ล็อกอิน และข้อมูล `readings` เข้าถึงได้เฉพาะเจ้าของ uid)
 
-1. **สวิตช์พัดลมในหน้าเว็บ (`fan.onclick`) มีตรรกะกลับด้าน** เมื่อเทียบกับสวิตช์อื่น
-2. ฟังก์ชัน `appendToTable()` ไม่ได้แสดงคอลัมน์ Light (แสดง 3 คอลัมน์ ขณะที่ `createTable()` แสดง 4)
-3. ควรย้าย `firebaseConfig` ของเว็บไปไว้เป็นไฟล์แยก และเพิ่ม Realtime Database Security Rules ที่รัดกุม
+### 📝 หมายเหตุ (ขึ้นกับฮาร์ดแวร์) / Note (hardware-dependent)
+
+- เกณฑ์แสงของ Auto Light (`val < 4050`) ขึ้นกับวิธีต่อวงจร LDR ของคุณ หากไฟติด/ดับสลับกับที่คาด
+  ให้สลับ `LOW`/`HIGH` ในบล็อก Auto Light ของเฟิร์มแวร์
 
 ---
 
