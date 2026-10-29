@@ -226,13 +226,20 @@ void loop() {
 
       TempAndHumidity data = dht.getTempAndHumidity();
 
-      String temp = String(data.temperature, 1);
-      String hum = String(data.humidity, 1);
+      // Keep the GLOBAL temperature/humidity up to date so the Auto Fan / Auto
+      // Light logic in the else-branch below works with the latest reading.
+      // (Previously a local `String temp` shadowed the global `float temp`, so
+      // the global stayed 0 and the `temp > 30` auto-fan check never triggered.)
+      if (!isnan(data.temperature)) temp = data.temperature;
+      if (!isnan(data.humidity)) hum = data.humidity;
+
+      String tempStr = String(data.temperature, 1);
+      String humStr = String(data.humidity, 1);
 
       Serial.print("Temperature: ");
-      Serial.println(temp);
+      Serial.println(tempStr);
       Serial.print("Humidity: ");
-      Serial.println(hum);
+      Serial.println(humStr);
       Serial.print("Light: ");
       Serial.println(val);
 
@@ -245,26 +252,27 @@ void loop() {
       systemFanPath = systemPath + "AutoFan";
       systemLightPath = systemPath + "AutoLight";
 
-      json.set(tempPath.c_str(), temp);
-      json.set(humPath.c_str(), hum);
+      json.set(tempPath.c_str(), tempStr);
+      json.set(humPath.c_str(), humStr);
       json.set(LDRPath.c_str(), val);
       json.set(timePath, String(timestamp));
       Serial.printf("Set json... %s\n", Firebase.RTDB.setJSON(&fbdo, parentPath.c_str(), &json) ? "ok" : fbdo.errorReason().c_str());
     } else {
-      // NOTE (known issue): in the original project the two auto blocks below are
-      // cross-wired — the "AutoFan" flag drives the light (LED7 / gpio 25) and the
-      // "AutoLight" flag drives the fan (gpio 26). The behaviour is kept exactly as
-      // submitted; see the "Known issues" section in README.md before changing it.
-      if (Firebase.RTDB.getInt(&fbdo, systemFanPath)) {
+      // AUTO LIGHT: when AutoLight is in Auto mode (flag == 0), switch the fence
+      // light (LED7 / GPIO 25) on when it gets dark (high LDR reading). The state
+      // written back to Firebase now matches the actual pin state.
+      if (Firebase.RTDB.getInt(&fbdo, systemLightPath)) {
         if (fbdo.dataType() == "int") {
           int home_system = fbdo.intData();
           if (home_system == 0) {
             if (val < 4050) {
+              // bright enough -> light off
               digitalWrite(LED7, LOW);
-              Firebase.RTDB.setInt(&fbdo, listenerPath + "26/", 1);
+              Firebase.RTDB.setInt(&fbdo, listenerPath + "25/", 0);
             } else {
+              // dark -> light on
               digitalWrite(LED7, HIGH);
-              Firebase.RTDB.setInt(&fbdo, listenerPath + "26/", 0);
+              Firebase.RTDB.setInt(&fbdo, listenerPath + "25/", 1);
             }
           }
         }
@@ -272,16 +280,20 @@ void loop() {
         Serial.println(fbdo.errorReason());
       }
 
-      if (Firebase.RTDB.getInt(&fbdo, systemLightPath)) {
+      // AUTO FAN: when AutoFan is in Auto mode (flag == 0), run the fan (GPIO 26)
+      // while the temperature is above 30 degrees C.
+      if (Firebase.RTDB.getInt(&fbdo, systemFanPath)) {
         if (fbdo.dataType() == "int") {
           int home_system = fbdo.intData();
           if (home_system == 0) {
             if (temp > 30) {
+              // hot -> fan on
               analogWrite(fan, 200);
-              Firebase.RTDB.setInt(&fbdo, listenerPath + "25/", 1);
+              Firebase.RTDB.setInt(&fbdo, listenerPath + "26/", 1);
             } else {
+              // cool -> fan off
               analogWrite(fan, 0);
-              Firebase.RTDB.setInt(&fbdo, listenerPath + "25/", 0);
+              Firebase.RTDB.setInt(&fbdo, listenerPath + "26/", 0);
             }
           }
         }
