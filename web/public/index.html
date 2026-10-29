@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Home — ESP Datalogging Firebase App</title>
+
+  <!-- include Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-app.js"></script>
+
+  <!-- include only the Firebase features as you need -->
+  <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.8.1/firebase-database.js"></script>
+
+  <script>
+    // Replace with your app config object (Firebase Console -> Project settings).
+    // Firebase web config is safe to expose publicly; access is protected by
+    // Authentication + Realtime Database security rules, not by hiding these values.
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT.firebaseapp.com",
+      databaseURL: "https://YOUR_PROJECT-default-rtdb.REGION.firebasedatabase.app",
+      projectId: "YOUR_PROJECT",
+      storageBucket: "YOUR_PROJECT.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    // Initialize firebase
+    firebase.initializeApp(firebaseConfig);
+
+    // Make auth and database references
+    const auth = firebase.auth();
+    const db = firebase.database();
+  </script>
+
+  <!-- icons -->
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+  <!-- include to use jquery -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <!-- include icons from fontawesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css"
+    integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous" />
+  <!-- include Gauges Javascript library -->
+  <script src="https://cdn.rawgit.com/Mikhus/canvas-gauges/gh-pages/download/2.1.7/all/gauge.min.js"></script>
+  <!-- reference for favicon -->
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <!-- reference a stylesheet -->
+  <link rel="stylesheet" type="text/css" href="style.css" />
+
+  <!-- Chart -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+  <!--TOP BAR-->
+  <div class="topnav">
+    <h1><i class="fas fa-home"></i> Smart Home</h1>
+  </div>
+
+  <!--AUTHENTICATION BAR (USER DETAILS/LOGOUT BUTTON)-->
+  <div id="authentication-bar" style="display: none">
+    <p>
+      <span id="authentication-status">User logged in</span>
+      <span id="user-details">USEREMAIL</span>
+      <a href="/" id="logout-link">(logout)</a>
+    </p>
+  </div>
+
+  <!--LOGIN FORM-->
+  <form id="login-form" style="display: none">
+    <div class="form-elements-container">
+      <label for="input-email"><b>Email</b></label>
+      <input type="text" placeholder="Enter Username" id="input-email" required />
+
+      <label for="input-password"><b>Password</b></label>
+      <input type="password" placeholder="Enter Password" id="input-password" required />
+
+      <button type="submit" id="login-button">Login</button>
+      <p id="error-message" style="color: red"></p>
+    </div>
+  </form>
+
+  <!--CONTENT (SENSOR READINGS)-->
+  <div class="content-sign-in" id="content-sign-in" style="display: none">
+
+    <!--CARD FOR GPIO 12-->
+    <div class="card-head">
+      <div class="card-1">
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb"></i> Bathroom</p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="bathSW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state1"></span></p>
+        </div>
+
+        <!--CARD FOR GPIO 13-->
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb"></i> Bedroom 1 </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="bedroom1SW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state2"></span></p>
+        </div>
+
+        <!--CARD FOR GPIO 14-->
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb"></i> Bedroom 2 </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="bedroom2SW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state3"></span></p>
+        </div>
+
+        <!--CARD FOR FAN (GPIO 26)-->
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb"></i> Fan </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="fan">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state8"></span></p>
+        </div>
+
+        <!--CARD FOR AUTO FAN-->
+        <div class="carddd">
+          <p class="card-title"><i class="fas fa-lightbulb" style="font-size:24px"></i> Auto Fan </p>
+          <p>
+            Auto
+            <label class="switch">
+              <input type="checkbox" id="AF">
+              <span class="slider"></span>
+            </label>
+            Manual
+          </p>
+          <p class="state">State:<span id="state9"></span></p>
+        </div>
+
+      </div>
+
+      <!--CARD FOR GPIO 15-->
+      <div class="card-2">
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb"></i> Hall 1 </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="Hall1SW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state4"></span></p>
+        </div>
+
+        <!--CARD FOR GPIO 16-->
+        <div class="cardd">
+          <p class="card-title"> <i class="fas fa-lightbulb"></i> <i></i> Hall 2</p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="Hall2SW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state5"></span></p>
+        </div>
+
+        <!--CARD FOR GPIO 17-->
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb" style="font-size:24px"></i> Hall 3 </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="Hall3SW">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state6"></span></p>
+        </div>
+
+        <!-- CARD FOR GPIO 26 (Lightout / fence light) -->
+        <div class="cardd">
+          <p class="card-title"><i class="fas fa-lightbulb" style="font-size:24px"></i> Lightout </p>
+          <p>
+            OFF
+            <label class="switch">
+              <input type="checkbox" id="lightout">
+              <span class="slider"></span>
+            </label>
+            ON
+          </p>
+          <p class="state">State:<span id="state7"></span></p>
+        </div>
+
+        <!--CARD FOR AUTO LIGHT-->
+        <div class="carddd">
+          <p class="card-title"><i class="fas fa-lightbulb" style="font-size:24px"></i> Auto Light</p>
+          <p>
+            Auto
+            <label class="switch">
+              <input type="checkbox" id="AL">
+              <span class="slider"></span>
+            </label>
+            Manual
+          </p>
+          <p class="state">State:<span id="state10"></span></p>
+        </div>
+      </div>
+    </div>
+
+    <!--LAST UPDATE-->
+    <p>
+      <span class="date-time">Last update: <span id="lastUpdate"></span></span>
+    </p>
+    <p>
+      Cards:
+      <input type="checkbox" id="cards-checkbox" name="cards-checkbox" checked />
+      Gauges:
+      <input type="checkbox" id="gauges-checkbox" name="gauges-checkbox" checked />
+    </p>
+
+    <div id="cardElement">
+      <div id="cards-div">
+        <div class="cards">
+          <!--TEMPERATURE-->
+          <div class="card">
+            <p>
+              <i class="fas fa-thermometer-half" style="color: #059e8a"></i>
+              TEMPERATURE
+            </p>
+            <p>
+              <span class="reading"><span id="temp"></span> &deg;C</span>
+            </p>
+          </div>
+
+          <!--HUMIDITY-->
+          <div class="card">
+            <p><i class="fas fa-tint" style="color: #00add6"></i> HUMIDITY</p>
+            <p>
+              <span class="reading"><span id="hum"></span> &percnt;</span>
+            </p>
+          </div>
+
+          <div class="card">
+            <p><i class="fas fa-bolt" style="color: #ebff34"></i> LIGHT</p>
+            <p>
+              <span class="reading"><span id="light"></span> LUX</span>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAUGES -->
+    <div id="gauges-div">
+      <div class="cards">
+        <!--TEMPERATURE-->
+        <div class="card">
+          <canvas id="gauge-temperature"></canvas>
+        </div>
+        <!--HUMIDITY-->
+        <div class="card">
+          <canvas id="gauge-humidity"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!--BUTTONS TO HANDLE DATA-->
+    <p>
+      <!--View data button-->
+      <button id="view-data-button">View all data</button>
+      <!--Hide data button-->
+      <button id="hide-data-button" style="display: none">Hide data</button>
+      <!--Delete data button-->
+      <button id="delete-button" class="deletebtn">Delete data</button>
+    </p>
+    <!--Modal to delete data-->
+    <div id="delete-modal" class="modal" style="display:none">
+      <span onclick="document.getElementById('delete-modal').style.display='none'" class="close"
+        title="Close Modal">&times;</span>
+      <form id="delete-data-form" class="modal-content" action="/">
+        <div class="container">
+          <h1>Delete Data</h1>
+          <p>Are you sure you want to delete all data from database?</p>
+          <div class="clearfix">
+            <button type="button" onclick="document.getElementById('delete-modal').style.display='none'"
+              class="cancelbtn">
+              Cancel
+            </button>
+            <button type="submit" onclick="document.getElementById('delete-modal').style.display='none'"
+              class="deletebtn">
+              Delete
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!--TABLE WITH ALL DATA-->
+    <div class="cards">
+      <div class="card" id="table-container" style="display: none">
+        <table id="readings-table">
+          <tr id="theader">
+            <th>Timestamp</th>
+            <th>Temp (&ordm;C)</th>
+            <th>Hum (%)</th>
+            <th>Light (Lx)</th>
+          </tr>
+          <tbody id="tbody"></tbody>
+        </table>
+        <p>
+          <button id="load-data" style="display: none">
+            More results...
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!--INCLUDE JS FILES-->
+  <script src="scripts/auth.js"></script>
+  <script src="scripts/gauges-definition.js"></script>
+  <script src="scripts/index.js"></script>
+</body>
+
+</html>

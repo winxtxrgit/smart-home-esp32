@@ -1,0 +1,19 @@
+# Secrets — never commit real credentials
+firmware/smart_home/arduino_secrets.h
+
+# Firebase
+web/.firebase/
+web/firebase-debug.log
+.firebaserc.local
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+*.hex
+*.bin
